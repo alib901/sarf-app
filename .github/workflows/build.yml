@@ -1,4 +1,4 @@
-name: Build APK via Shell
+name: Ultimate Shell Build
 on: [push]
 
 jobs:
@@ -6,24 +6,45 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies (Python & Buildozer)
+      
+      # گام ۱: نصب پیش نیازهای سیستمی و پایتون
+      - name: Install System Dependencies
         run: |
           sudo apt update
-          sudo apt install -y python3-pip openjdk-17-jdk git build-essential
+          sudo apt install -y python3-pip openjdk-17-jdk git build-essential unzip
           pip3 install buildozer cython==0.29.33 arabic-reshaper python-bidi
-
-      - name: Setup Android NDK and SDK
-        uses: r0adkll/setup-android-sdk@v1
-        with:
-          # ما SDK و NDK مورد نیاز Buildozer را نصب می‌کنیم
-          android-version: 30
-          ndk-version: 21.4.7075529 # NDK مورد نیاز Buildozer
           
-      - name: Run Buildozer (The Final Command)
+      # گام ۲: نصب ابزارهای اندروید (Android SDK/NDK) به صورت دستی
+      # این گام، Actionهای شخص ثالث را حذف می کند
+      - name: Setup Android Environment (Manual)
+        run: |
+          # مسیرهای مورد نیاز Buildozer
+          mkdir -p ~/.buildozer/android/platform/android-sdk
+          export ANDROIDSDK=~/.buildozer/android/platform/android-sdk
+          export ANDROIDNDK=~/.buildozer/android/platform/android-ndk
+          
+          # نصب SDK (استفاده از نسخه Command Line Tools)
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8504014_latest.zip -O android_tools.zip
+          unzip android_tools.zip -d "$ANDROIDSDK"
+          
+          # پذیرش لایسنس ها و نصب پلتفرم مورد نیاز
+          echo y | "$ANDROIDSDK/cmdline-tools/bin/sdkmanager" "platform-tools" "platforms;android-30"
+          
+          # دانلود NDK (نسخه 21.4.7075529 که Buildozer نیاز دارد)
+          wget https://dl.google.com/android/repository/android-ndk-r21e-linux.zip -O android_ndk.zip
+          unzip android_ndk.zip -d "$ANDROIDNDK/.."
+          mv "$ANDROIDNDK/android-ndk-r21e" "$ANDROIDNDK/android-ndk-21e"
+          
+          # تعریف متغیرهای محیطی برای buildozer
+          echo "ANDROIDSDK=$ANDROIDSDK" >> $GITHUB_ENV
+          echo "ANDROIDNDK=$ANDROIDNDK/android-ndk-21e" >> $GITHUB_ENV
+
+      # گام ۳: اجرای Buildozer
+      - name: Run Buildozer
         run: |
           buildozer android debug
-
+          
+      # گام ۴: آپلود
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
