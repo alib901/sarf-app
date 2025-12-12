@@ -1,22 +1,28 @@
-name: Ultimate Shell Build (Final)
+name: Ultimate Shell Build (Final Clean)
 on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # مطمئن شوید که کد پروژه وجود دارد
       - uses: actions/checkout@v4
       
-      # گام ۱: نصب پیش نیازهای سیستمی و پایتون
+      # گام ۱.۱: پاکسازی دایرکتوری Buildozer
+      - name: Clean previous build artifacts
+        run: |
+          # حذف دایرکتوری های باقی مانده از تلاش های قبلی
+          rm -rf .buildozer/
+          buildozer clean
+          
+      # گام ۲: نصب پیش نیازهای سیستمی و پایتون
       - name: Install System Dependencies and Buildozer
         run: |
           sudo apt update
-          # نصب Java 17 و ابزارهای ضروری
           sudo apt install -y python3-pip openjdk-17-jdk git build-essential unzip
-          # نصب Buildozer و کتابخانه های فارسی
           pip3 install buildozer cython==0.29.33 arabic-reshaper python-bidi
           
-      # گام ۲: نصب اندروید و اجرای Buildozer (همه در یک Shell)
+      # گام ۳: نصب اندروید و اجرای Buildozer (همه در یک Shell)
       - name: Setup Android and Run Buildozer (Single Step)
         run: |
           # تعریف مسیرهای مطلق
@@ -39,11 +45,10 @@ jobs:
           unzip android_ndk.zip -d "$ANDROIDNDK/.."
           mv "$ANDROIDNDK/android-ndk-r21e" "$ANDROIDNDK/android-ndk-21e"
           
-          # *اجرای نهایی Buildozer در همین Shell*
-          # Buildozer متغیرهای ANDROIDSDK و ANDROIDNDK را به صورت محلی می بیند
+          # اجرای نهایی Buildozer در همین Shell
           buildozer android debug
           
-      # گام ۳: آپلود Artifact
+      # گام ۴: آپلود Artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
