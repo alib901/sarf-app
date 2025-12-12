@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK via Docker
 on: [push]
 
 jobs:
@@ -6,12 +6,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build
-        uses: clyang/buildozer-action@v1
+
+      - name: Build and Deploy APK (Using Kivy Official Docker)
+        uses: docker://buerokratt/buildozer-android:latest
         with:
-          command: buildozer android debug
-          buildozer_args: --sdk 33 --android-api 30
-      - name: Upload
+          args: buildozer android debug --sdk 33 --android-api 30
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Kivy-Sarf-App
