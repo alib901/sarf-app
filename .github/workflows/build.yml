@@ -6,10 +6,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        uses: Artem-B/buildozer-action@v1  
+     - uses: kivy/buildozer-action@v1 
         with:
           command: buildozer android debug
-          buildozer_args: --sdk 33 --android-api 27
+       buildozer_args: --sdk 33 --android-api 30
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
