@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        uses: kivy/buildozer-action@v1
+        uses: clyang/buildozer-action@v1
         with:
           command: buildozer android debug
           buildozer_args: --sdk 33 --android-api 30
