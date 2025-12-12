@@ -1,4 +1,4 @@
-name: Ultimate Shell Build
+name: Ultimate Shell Build (Final)
 on: [push]
 
 jobs:
@@ -34,16 +34,18 @@ jobs:
           unzip android_ndk.zip -d "$ANDROIDNDK/.."
           mv "$ANDROIDNDK/android-ndk-r21e" "$ANDROIDNDK/android-ndk-21e"
           
-          # ثبت متغیرهای محیطی برای گام های بعدی (رفع خطای exit code 8)
+          # ثبت متغیرهای محیطی برای گام های بعدی در سطح GitHub Environment
           echo "ANDROIDSDK=$ANDROIDSDK" >> $GITHUB_ENV
           echo "ANDROIDNDK=$ANDROIDNDK/android-ndk-21e" >> $GITHUB_ENV
-          
-          # افزودن مسیر ابزارهای سیستمی به PATH
           echo "$ANDROIDSDK/platform-tools" >> $GITHUB_PATH
           
-      # گام ۳: اجرای Buildozer
+      # گام ۳: اجرای Buildozer (با تعریف مجدد متغیرهای محلی برای اطمینان بیشتر)
       - name: Run Buildozer (Final Build)
         run: |
+          # تعریف مجدد متغیرها در سطح Shell برای اطمینان از رفع خطای exit code 8
+          export ANDROIDSDK=~/.buildozer/android/platform/android-sdk
+          export ANDROIDNDK=~/.buildozer/android/platform/android-ndk/android-ndk-21e
+          
           buildozer android debug
           
       # گام ۴: آپلود
