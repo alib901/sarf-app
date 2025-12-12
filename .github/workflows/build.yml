@@ -11,16 +11,18 @@ jobs:
       - name: Install System Dependencies and Buildozer
         run: |
           sudo apt update
+          # نصب Java 17 و ابزارهای ضروری
           sudo apt install -y python3-pip openjdk-17-jdk git build-essential unzip
+          # نصب Buildozer و کتابخانه های فارسی
           pip3 install buildozer cython==0.29.33 arabic-reshaper python-bidi
           
-      # گام ۲: نصب ابزارهای اندروید (Android SDK/NDK) به صورت دستی
+      # گام ۲: نصب ابزارهای اندروید (SDK/NDK) به صورت دستی
       - name: Setup Android Environment (Manual)
         run: |
-          # مسیرهای محلی برای نصب
+          # تعریف مسیرهای محلی (Home Directory در GitHub Actions عموماً /home/runner است)
           mkdir -p ~/.buildozer/android/platform/android-sdk
-          export ANDROIDSDK=~/.buildozer/android/platform/android-sdk
-          export ANDROIDNDK=~/.buildozer/android/platform/android-ndk
+          export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk
+          export ANDROIDNDK=/home/runner/.buildozer/android/platform/android-ndk
           
           # دانلود Command Line Tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-8504014_latest.zip -O android_tools.zip
@@ -29,26 +31,24 @@ jobs:
           # پذیرش لایسنس ها و نصب پلتفرم اندروید 30
           yes | "$ANDROIDSDK/cmdline-tools/bin/sdkmanager" "platform-tools" "platforms;android-30"
           
-          # دانلود NDK مورد نیاز Buildozer (نسخه 21e)
+          # دانلود NDK (نسخه 21e)
           wget https://dl.google.com/android/repository/android-ndk-r21e-linux.zip -O android_ndk.zip
           unzip android_ndk.zip -d "$ANDROIDNDK/.."
           mv "$ANDROIDNDK/android-ndk-r21e" "$ANDROIDNDK/android-ndk-21e"
           
-          # ثبت متغیرهای محیطی برای گام های بعدی در سطح GitHub Environment
-          echo "ANDROIDSDK=$ANDROIDSDK" >> $GITHUB_ENV
-          echo "ANDROIDNDK=$ANDROIDNDK/android-ndk-21e" >> $GITHUB_ENV
+          # افزودن مسیر ابزارهای سیستمی به PATH
           echo "$ANDROIDSDK/platform-tools" >> $GITHUB_PATH
           
-      # گام ۳: اجرای Buildozer (با تعریف مجدد متغیرهای محلی برای اطمینان بیشتر)
+      # گام ۳: اجرای Buildozer (با تزریق مستقیم متغیرها برای رفع خطای exit code 8)
       - name: Run Buildozer (Final Build)
+        # تزریق متغیرهای محیطی با استفاده از مسیرهای مطلق
+        env:
+          ANDROIDSDK: /home/runner/.buildozer/android/platform/android-sdk
+          ANDROIDNDK: /home/runner/.buildozer/android/platform/android-ndk/android-ndk-21e
         run: |
-          # تعریف مجدد متغیرها در سطح Shell برای اطمینان از رفع خطای exit code 8
-          export ANDROIDSDK=~/.buildozer/android/platform/android-sdk
-          export ANDROIDNDK=~/.buildozer/android/platform/android-ndk/android-ndk-21e
-          
           buildozer android debug
           
-      # گام ۴: آپلود
+      # گام ۴: آپلود Artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
