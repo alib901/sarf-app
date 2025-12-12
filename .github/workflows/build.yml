@@ -16,39 +16,34 @@ jobs:
           # نصب Buildozer و کتابخانه های فارسی
           pip3 install buildozer cython==0.29.33 arabic-reshaper python-bidi
           
-      # گام ۲: نصب ابزارهای اندروید (SDK/NDK) به صورت دستی
-      - name: Setup Android Environment (Manual)
+      # گام ۲: نصب اندروید و اجرای Buildozer (همه در یک Shell)
+      - name: Setup Android and Run Buildozer (Single Step)
         run: |
-          # تعریف مسیرهای محلی (Home Directory در GitHub Actions عموماً /home/runner است)
-          mkdir -p ~/.buildozer/android/platform/android-sdk
+          # تعریف مسیرهای مطلق
           export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk
           export ANDROIDNDK=/home/runner/.buildozer/android/platform/android-ndk
           
-          # دانلود Command Line Tools
+          # ساخت دایرکتوری ها
+          mkdir -p $ANDROIDSDK
+          mkdir -p $ANDROIDNDK
+          
+          # دانلود و نصب SDK Command Line Tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-8504014_latest.zip -O android_tools.zip
           unzip android_tools.zip -d "$ANDROIDSDK"
           
           # پذیرش لایسنس ها و نصب پلتفرم اندروید 30
           yes | "$ANDROIDSDK/cmdline-tools/bin/sdkmanager" "platform-tools" "platforms;android-30"
           
-          # دانلود NDK (نسخه 21e)
+          # دانلود و نصب NDK (نسخه 21e)
           wget https://dl.google.com/android/repository/android-ndk-r21e-linux.zip -O android_ndk.zip
           unzip android_ndk.zip -d "$ANDROIDNDK/.."
           mv "$ANDROIDNDK/android-ndk-r21e" "$ANDROIDNDK/android-ndk-21e"
           
-          # افزودن مسیر ابزارهای سیستمی به PATH
-          echo "$ANDROIDSDK/platform-tools" >> $GITHUB_PATH
-          
-      # گام ۳: اجرای Buildozer (با تزریق مستقیم متغیرها برای رفع خطای exit code 8)
-      - name: Run Buildozer (Final Build)
-        # تزریق متغیرهای محیطی با استفاده از مسیرهای مطلق
-        env:
-          ANDROIDSDK: /home/runner/.buildozer/android/platform/android-sdk
-          ANDROIDNDK: /home/runner/.buildozer/android/platform/android-ndk/android-ndk-21e
-        run: |
+          # *اجرای نهایی Buildozer در همین Shell*
+          # Buildozer متغیرهای ANDROIDSDK و ANDROIDNDK را به صورت محلی می بیند
           buildozer android debug
           
-      # گام ۴: آپلود Artifact
+      # گام ۳: آپلود Artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
