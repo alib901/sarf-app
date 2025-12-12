@@ -1,4 +1,4 @@
-name: Build APK via Docker
+name: Build APK via Shell
 on: [push]
 
 jobs:
@@ -7,10 +7,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and Deploy APK (Using Kivy Official Docker)
-        uses: docker://kivy/buildozer:stable
+      - name: Install dependencies (Python & Buildozer)
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip openjdk-17-jdk git build-essential
+          pip3 install buildozer cython==0.29.33 arabic-reshaper python-bidi
+
+      - name: Setup Android NDK and SDK
+        uses: r0adkll/setup-android-sdk@v1
         with:
-          args: buildozer android debug --sdk 33 --android-api 30
+          # ما SDK و NDK مورد نیاز Buildozer را نصب می‌کنیم
+          android-version: 30
+          ndk-version: 21.4.7075529 # NDK مورد نیاز Buildozer
+          
+      - name: Run Buildozer (The Final Command)
+        run: |
+          buildozer android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
